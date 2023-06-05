@@ -1,0 +1,25 @@
+{
+  "name": "freezemage0/php-lookup-bot",
+  "description": "description",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "user",
+      "email": "email@example.com"
+    }
+  ],
+  "require": {
+    "php": "^8.1",
+    "team-reflex/discord-php": "^v7.0",
+    "guzzlehttp/guzzle": "^7",
+    "ext-dom": "*",
+    "symfony/dom-crawler": "^6.3",
+    "symfony/css-selector": "^6.3"
+  },
+  "autoload": {
+    "psr-4": {
+      "Freezemage\\LookupBot\\": "src/"
+    }
+  }
+}
