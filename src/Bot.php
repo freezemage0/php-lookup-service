@@ -25,6 +25,15 @@ class Bot
         $this->appendDefaultCompilers();
     }
 
+    private function appendDefaultCompilers(): void
+    {
+        $this->compilers = [
+                ...$this->compilers,
+                new Descriptive(),
+                new SynopsisOnly()
+        ];
+    }
+
     public function run(Message $message, array $arguments): void
     {
         $query = array_shift($arguments);
@@ -32,8 +41,8 @@ class Bot
         while (!empty($arguments)) {
             $argument = array_shift($arguments);
 
-            $compiler = $this->resolveCompiler($argument);
-            $language = Language::match($argument);
+            $compiler ??= $this->resolveCompiler($argument);
+            $language ??= Language::match($argument);
         }
 
         $result = $this->service->findByDefinition(
@@ -44,15 +53,6 @@ class Bot
 
         $reply = MessageBuilder::new()->setContent($result);
         $message->reply($reply);
-    }
-
-    private function appendDefaultCompilers(): void
-    {
-        $this->compilers = [
-                ...$this->compilers,
-                new Descriptive(),
-                new SynopsisOnly()
-        ];
     }
 
     private function resolveCompiler(string $argument): ?Compiler
