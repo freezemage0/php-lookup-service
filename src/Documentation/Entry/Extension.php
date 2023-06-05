@@ -3,6 +3,7 @@
 
 namespace Freezemage\LookupBot\Documentation\Entry;
 
+
 use Freezemage\LookupBot\Documentation\Compiler;
 use Freezemage\LookupBot\Documentation\Entry;
 

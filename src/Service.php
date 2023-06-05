@@ -3,11 +3,9 @@
 
 namespace Freezemage\LookupBot;
 
+
 use Freezemage\LookupBot\Documentation\Compiler;
-use Freezemage\LookupBot\Documentation\Compiler\Descriptive;
 use Freezemage\LookupBot\Documentation\ParserStrategy;
-use Freezemage\LookupBot\ValueObject\Result;
-use Freezemage\LookupBot\ValueObject\ReturnValue;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use RuntimeException;
@@ -19,10 +17,8 @@ class Service
     /**
      * @param RequestFactoryInterface $requestFactory
      * @param ClientInterface $client
-     *
      * @param ParserStrategy[] $parsers
      */
-
     public function __construct(
             private readonly RequestFactoryInterface $requestFactory,
             private readonly ClientInterface $client,
@@ -30,18 +26,18 @@ class Service
     ) {
     }
 
-    public function findByDefinition(string $definition, Compiler $compiler = null): string
+    public function findByDefinition(string $definition, Compiler $compiler): string
     {
-        $compiler ??= new Descriptive();
+        $definition = Service::sanitize($definition);
 
         $request = $this->requestFactory->createRequest('GET', "https://www.php.net/{$definition}");
         $response = $this->client->sendRequest($request);
-
         $crawler = new Crawler($response->getBody());
-        $definition = str_replace('.', '\\.', $definition);
+
+        $selector = str_replace('.', '\\.', $definition);
 
         foreach ($this->parsers as $parser) {
-            if (!$parser->isProcessable($crawler, $definition)) {
+            if (!$parser->isProcessable($crawler, $selector)) {
                 continue;
             }
 
@@ -50,5 +46,11 @@ class Service
         }
 
         throw new RuntimeException('Failed to find by definition.');
+    }
+
+    private static function sanitize(string $definition): string
+    {
+        $definition = preg_replace('/[^A-Za-z0-9:\->_.]/', '', $definition);
+        return str_replace(['::', '->'], '.', $definition);
     }
 }

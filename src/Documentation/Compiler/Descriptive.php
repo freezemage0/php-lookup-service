@@ -3,6 +3,7 @@
 
 namespace Freezemage\LookupBot\Documentation\Compiler;
 
+
 use Freezemage\LookupBot\Documentation\Compiler;
 use Freezemage\LookupBot\Documentation\Entry\ClassEntry;
 use Freezemage\LookupBot\Documentation\Entry\Extension;
@@ -15,13 +16,13 @@ class Descriptive implements Compiler
     public function compileMethod(Method $method): string
     {
         $synopsis = array_map(
-                static fn (string $synopsis): string => "```php\n{$synopsis}```",
+                static fn(string $synopsis): string => "```php\n{$synopsis}```",
                 $method->synopsis
         );
         $synopsis = implode("\n", $synopsis);
 
         $parameters = array_map(
-                static fn (Parameter $parameter): string => "> - `{$parameter->name}` - {$parameter->description}",
+                static fn(Parameter $parameter): string => "> - `{$parameter->name}` - {$parameter->description}",
                 $method->parameters
         );
         $parameters = implode("\n", $parameters);
@@ -46,5 +47,10 @@ class Descriptive implements Compiler
     public function compileExtension(Extension $extension): string
     {
         // TODO: Implement compileExtension() method.
+    }
+
+    public function getArgumentAliases(): array
+    {
+        return ['--full', '-f'];
     }
 }
