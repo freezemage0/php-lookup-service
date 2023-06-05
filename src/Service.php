@@ -5,6 +5,7 @@ namespace Freezemage\LookupBot;
 
 
 use Freezemage\LookupBot\Documentation\Compiler;
+use Freezemage\LookupBot\Documentation\Language;
 use Freezemage\LookupBot\Documentation\ParserStrategy;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
@@ -26,11 +27,15 @@ class Service
     ) {
     }
 
-    public function findByDefinition(string $definition, Compiler $compiler): string
+    public function findByDefinition(string $definition, Compiler $compiler, Language $language): string
     {
         $definition = Service::sanitize($definition);
 
-        $request = $this->requestFactory->createRequest('GET', "https://www.php.net/{$definition}");
+        $request = $this->requestFactory->createRequest(
+                'GET',
+                "https://www.php.net/{$language->value}/{$definition}"
+        );
+
         $response = $this->client->sendRequest($request);
         $crawler = new Crawler($response->getBody());
 

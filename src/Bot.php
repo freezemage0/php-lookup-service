@@ -9,6 +9,7 @@ use Discord\Parts\Channel\Message;
 use Freezemage\LookupBot\Documentation\Compiler;
 use Freezemage\LookupBot\Documentation\Compiler\Descriptive;
 use Freezemage\LookupBot\Documentation\Compiler\SynopsisOnly;
+use Freezemage\LookupBot\Documentation\Language;
 
 
 class Bot
@@ -32,9 +33,14 @@ class Bot
             $argument = array_shift($arguments);
 
             $compiler = $this->resolveCompiler($argument);
+            $language = Language::match($argument);
         }
 
-        $result = $this->service->findByDefinition($query, $compiler ?? new Descriptive());
+        $result = $this->service->findByDefinition(
+                $query,
+                $compiler ?? new Descriptive(),
+                $language ?? Language::ENGLISH
+        );
 
         $reply = MessageBuilder::new()->setContent($result);
         $message->reply($reply);
