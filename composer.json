@@ -11,11 +11,11 @@
   ],
   "require": {
     "php": "^8.1",
-    "team-reflex/discord-php": "^v7.0",
     "guzzlehttp/guzzle": "^7",
     "ext-dom": "*",
     "symfony/dom-crawler": "^6.3",
-    "symfony/css-selector": "^6.3"
+    "symfony/css-selector": "^6.3",
+    "exan/fenrir": "^0.6.2"
   },
   "autoload": {
     "psr-4": {

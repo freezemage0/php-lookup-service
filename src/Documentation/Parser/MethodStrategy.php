@@ -13,7 +13,6 @@ use Symfony\Component\DomCrawler\Crawler;
 
 class MethodStrategy implements ParserStrategy
 {
-
     public function isProcessable(Crawler $page, string $selector): bool
     {
         return $page->filter("#{$selector}")->count() !== 0;

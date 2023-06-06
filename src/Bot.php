@@ -4,18 +4,23 @@
 namespace Freezemage\LookupBot;
 
 
-use Discord\Builders\MessageBuilder;
-use Discord\Parts\Interactions\Request\Option;
-use Discord\Parts\Interactions\Interaction;
 use Exception;
 use Freezemage\LookupBot\Documentation\Compiler;
 use Freezemage\LookupBot\Documentation\Compiler\Descriptive;
-use Freezemage\LookupBot\Documentation\Compiler\SynopsisOnly;
+use Freezemage\LookupBot\Documentation\Compiler\Fallback;
+use Freezemage\LookupBot\Documentation\CompilerResolverInterface;
+use Freezemage\LookupBot\Documentation\DefaultCompilerResolver;
+use Freezemage\LookupBot\Documentation\ParserStrategy;
 use Freezemage\LookupBot\ValueObject\Language;
+use Ragnarok\Fenrir\Discord;
+use Ragnarok\Fenrir\Gateway\Events\MessageCreate;
+use Ragnarok\Fenrir\Rest\Helpers\Channel\MessageBuilder;
 
 
 final class Bot
 {
+    const COMMAND_PREFIX = '!pls';
+
     /**
      * @param Locator $locator
      * @param array<array-key, Compiler> $compilers
@@ -23,32 +28,26 @@ final class Bot
      * @param DefinitionFactory $definitionFactory
      */
     public function __construct(
+            private readonly Discord $facade,
             private readonly Locator $locator,
+            private readonly DefinitionFactory $definitionFactory = new DefinitionFactory(),
             private array $compilers = [],
-            private readonly Compiler $defaultCompiler = new Descriptive(),
-            private readonly DefinitionFactory $definitionFactory = new DefinitionFactory()
+            private readonly Compiler $defaultCompiler = new Descriptive()
     ) {
-        $this->appendDefaultCompilers();
     }
 
-    /**
-     * TODO: Replace with injectable CompilerCollection.
-     */
-    private function appendDefaultCompilers(): void
+    public function run(MessageCreate $message): void
     {
-        $this->compilers = [
-                ...$this->compilers,
-                new Descriptive(),
-                new SynopsisOnly()
-        ];
-    }
+        if (!empty($message->author->bot)) {
+            return;
+        }
 
-    public function run(Interaction $interaction): void
-    {
-        $arguments = array_map(
-                static fn (Option $o): string => $o->value,
-                $interaction->data->options->toArray()
-        );
+        $arguments = explode(' ', $message->content);
+
+        $command = array_shift($arguments);
+        if ($command !== Bot::COMMAND_PREFIX) {
+            return;
+        }
 
         $query = array_shift($arguments);
 
@@ -60,16 +59,28 @@ final class Bot
         }
 
         try {
-            $content = $this->locator->find(
-                    $this->definitionFactory->create($query, $language ?? Language::ENGLISH),
-                    $compiler ?? $this->defaultCompiler
-            );
+            $definition = $this->definitionFactory->create($query, $language ?? Language::ENGLISH);
+            $entry = $this->locator->find($definition);
+            $content = $entry->compile($compiler ?? $this->defaultCompiler);
         } catch (Exception $e) {
+            // todo: actually handle an exception.
             $content = 'Unable to process your query, sorry :sweat_smile:';
         }
 
-        $reply = MessageBuilder::new()->setContent($content);
-        $interaction->respondWithMessage($reply);
+        $builder = new MessageBuilder();
+        $builder->setContent($content)
+                ->setReference(
+                        $message->channel_id,
+                        $message->id,
+                        true
+                );
+
+        $this->facade->rest->channel->createMessage($message->channel_id, $builder);
+    }
+
+    public function addCompiler(Compiler $compiler): void
+    {
+        $this->compilers[] = $compiler;
     }
 
     private function resolveCompiler(string $argument): ?Compiler
