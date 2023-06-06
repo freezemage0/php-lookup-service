@@ -10,7 +10,6 @@ use Freezemage\LookupBot\Documentation\Entry;
 
 final class Method implements Entry
 {
-
     public function __construct(
             public readonly array $synopsis,
             public readonly array $parameters,

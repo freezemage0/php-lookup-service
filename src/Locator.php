@@ -5,15 +5,15 @@ namespace Freezemage\LookupBot;
 
 
 use Freezemage\LookupBot\Documentation\Compiler;
-use Freezemage\LookupBot\Documentation\Language;
 use Freezemage\LookupBot\Documentation\ParserStrategy;
+use Freezemage\LookupBot\ValueObject\Definition;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use RuntimeException;
 use Symfony\Component\DomCrawler\Crawler;
 
 
-class Service
+class Locator
 {
     /**
      * @param RequestFactoryInterface $requestFactory
@@ -27,22 +27,18 @@ class Service
     ) {
     }
 
-    public function findByDefinition(string $definition, Compiler $compiler, Language $language): string
+    public function find(Definition $definition, Compiler $compiler): string
     {
-        $definition = Service::sanitize($definition);
-
         $request = $this->requestFactory->createRequest(
                 'GET',
-                "https://www.php.net/{$language->value}/{$definition}"
+                "https://www.php.net/{$definition->language->value}/{$definition->query}"
         );
 
         $response = $this->client->sendRequest($request);
         $crawler = new Crawler($response->getBody());
 
-        $selector = str_replace('.', '\\.', $definition);
-
         foreach ($this->parsers as $parser) {
-            if (!$parser->isProcessable($crawler, $selector)) {
+            if (!$parser->isProcessable($crawler, $definition->selector)) {
                 continue;
             }
 
@@ -51,11 +47,5 @@ class Service
         }
 
         throw new RuntimeException('Failed to find by definition.');
-    }
-
-    private static function sanitize(string $definition): string
-    {
-        $definition = preg_replace('/[^A-Za-z0-9:\->_.]/', '', $definition);
-        return str_replace(['::', '->'], '.', $definition);
     }
 }

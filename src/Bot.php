@@ -5,26 +5,35 @@ namespace Freezemage\LookupBot;
 
 
 use Discord\Builders\MessageBuilder;
-use Discord\Parts\Channel\Message;
+use Discord\Parts\Interactions\Request\Option;
+use Discord\Parts\Interactions\Interaction;
+use Exception;
 use Freezemage\LookupBot\Documentation\Compiler;
 use Freezemage\LookupBot\Documentation\Compiler\Descriptive;
 use Freezemage\LookupBot\Documentation\Compiler\SynopsisOnly;
-use Freezemage\LookupBot\Documentation\Language;
+use Freezemage\LookupBot\ValueObject\Language;
 
 
-class Bot
+final class Bot
 {
     /**
-     * @param Service $service
+     * @param Locator $locator
      * @param array<array-key, Compiler> $compilers
+     * @param Compiler $defaultCompiler
+     * @param DefinitionFactory $definitionFactory
      */
     public function __construct(
-            private readonly Service $service,
-            private array $compilers = []
+            private readonly Locator $locator,
+            private array $compilers = [],
+            private readonly Compiler $defaultCompiler = new Descriptive(),
+            private readonly DefinitionFactory $definitionFactory = new DefinitionFactory()
     ) {
         $this->appendDefaultCompilers();
     }
 
+    /**
+     * TODO: Replace with injectable CompilerCollection.
+     */
     private function appendDefaultCompilers(): void
     {
         $this->compilers = [
@@ -34,8 +43,13 @@ class Bot
         ];
     }
 
-    public function run(Message $message, array $arguments): void
+    public function run(Interaction $interaction): void
     {
+        $arguments = array_map(
+                static fn (Option $o): string => $o->value,
+                $interaction->data->options->toArray()
+        );
+
         $query = array_shift($arguments);
 
         while (!empty($arguments)) {
@@ -45,14 +59,17 @@ class Bot
             $language ??= Language::match($argument);
         }
 
-        $result = $this->service->findByDefinition(
-                $query,
-                $compiler ?? new Descriptive(),
-                $language ?? Language::ENGLISH
-        );
+        try {
+            $content = $this->locator->find(
+                    $this->definitionFactory->create($query, $language ?? Language::ENGLISH),
+                    $compiler ?? $this->defaultCompiler
+            );
+        } catch (Exception $e) {
+            $content = 'Unable to process your query, sorry :sweat_smile:';
+        }
 
-        $reply = MessageBuilder::new()->setContent($result);
-        $message->reply($reply);
+        $reply = MessageBuilder::new()->setContent($content);
+        $interaction->respondWithMessage($reply);
     }
 
     private function resolveCompiler(string $argument): ?Compiler

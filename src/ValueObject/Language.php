@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Freezemage\LookupBot\Documentation;
+namespace Freezemage\LookupBot\ValueObject;
 
 enum Language: string
 {
