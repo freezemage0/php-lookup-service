@@ -6,6 +6,7 @@ namespace Freezemage\LookupBot\Documentation\Entry;
 
 use Freezemage\LookupBot\Documentation\Compiler;
 use Freezemage\LookupBot\Documentation\Entry;
+use Freezemage\LookupBot\Documentation\Entry\Method\ReturnValues;
 
 
 final class Method implements Entry
@@ -13,7 +14,7 @@ final class Method implements Entry
     public function __construct(
             public readonly array $synopsis,
             public readonly array $parameters,
-            public readonly string $returnValue,
+            public readonly ReturnValues $returnValue,
             public readonly string $errors
     ) {
     }

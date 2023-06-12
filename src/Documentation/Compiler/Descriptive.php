@@ -32,8 +32,8 @@ class Descriptive implements Compiler
         $synopsis
         ### Parameters
         $parameters
-        ### Return values
-        > $method->returnValue
+        ### {$method->returnValue->title}
+        > {$method->returnValue->description->format()}
         ### Errors
         > $method->errors
         METHOD;

@@ -7,10 +7,6 @@ namespace Freezemage\LookupBot;
 use Exception;
 use Freezemage\LookupBot\Documentation\Compiler;
 use Freezemage\LookupBot\Documentation\Compiler\Descriptive;
-use Freezemage\LookupBot\Documentation\Compiler\Fallback;
-use Freezemage\LookupBot\Documentation\CompilerResolverInterface;
-use Freezemage\LookupBot\Documentation\DefaultCompilerResolver;
-use Freezemage\LookupBot\Documentation\ParserStrategy;
 use Freezemage\LookupBot\ValueObject\Language;
 use Ragnarok\Fenrir\Discord;
 use Ragnarok\Fenrir\Gateway\Events\MessageCreate;
@@ -22,10 +18,11 @@ final class Bot
     const COMMAND_PREFIX = '!pls';
 
     /**
+     * @param Discord $facade
      * @param Locator $locator
+     * @param DefinitionFactory $definitionFactory
      * @param array<array-key, Compiler> $compilers
      * @param Compiler $defaultCompiler
-     * @param DefinitionFactory $definitionFactory
      */
     public function __construct(
             private readonly Discord $facade,
